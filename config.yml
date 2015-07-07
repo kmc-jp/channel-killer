@@ -1,0 +1,3 @@
+slack:
+  # Create and get slack token from https://api.slack.com/web#authentication
+  token: xoxp-3069876617-3069876619-4674301566-68fe5f

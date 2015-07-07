@@ -1,3 +1,4 @@
-/.bundle
+node_modules
+.bundle
 /vendor/bundle
-config.yml
+.hubot_history
