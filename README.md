@@ -1,3 +1,3 @@
 # Slack Channel Killer
 
-Automatically archive unused channel.
+Archive unused channel.

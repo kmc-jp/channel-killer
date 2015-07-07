@@ -1,0 +1,4 @@
+slack:
+  # Create and get slack token from https://api.slack.com/web#authentication
+  token:
+threshold: 2 * 30 * 24 * 60 * 60
