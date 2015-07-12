@@ -1,6 +1,5 @@
 var SlackClient = require('slack-client');
 
-var threshold = 30 * 24 * 60 * 60 * 1000;
 var options = {
   token: process.env.HUBOT_SLACK_TOKEN,
   autoReconnect: true,
@@ -15,7 +14,7 @@ var joinAllChannels = function() {
     }
   });
 };
-var isChannelUnused = function(channel) {
+var isChannelUnused = function(channel, threshold) {
   if (channel.is_archived) {
     return false;
   }
@@ -28,9 +27,9 @@ var isChannelUnused = function(channel) {
   var lastUpdate = new Date(channel.latest.ts * 1000);
   return (new Date() - lastUpdate) > threshold;
 };
-var getUnusedChannels = function() {
+var getUnusedChannels = function(threshold) {
   return Object.keys(client.channels).filter(function(id) {
-    return isChannelUnused(client.channels[id]);
+    return isChannelUnused(client.channels[id], threshold);
   });
 };
 
@@ -68,18 +67,22 @@ module.exports = function(robot) {
   };
 
   // say the list of channels to be killed
-  robot.respond(/list/i, function(res) {
-    res.reply("Following channels are not used:");
-    var channels = getUnusedChannels().map(function(id) {
+  robot.respond(/list ([0-9]+)days/i, function(res) {
+    var threshold = parseInt(res.match[1]) * 24 * 60 * 60 * 1000;
+    res.reply("Following channels are not used for " + threshold + "days:");
+
+    var channels = getUnusedChannels(threshold).map(function(id) {
       return client.channels[id].name;
     });
     res.reply(formatChannels(channels));
   });
 
   // archive the channel
-  robot.respond(/kill/i, function(res) {
+  robot.respond(/kill ([0-9]+)days/i, function(res) {
+    var threshold = parseInt(res.match[1]) * 24 * 60 * 60 * 1000;
     res.reply("Following channels will be archived:");
-    var channels = getUnusedChannels().map(function(id) {
+
+    var channels = getUnusedChannels(threshold).map(function(id) {
       client._apiCall('channels.archive', { channel: id });
       return client.channels[id].name;
     });
