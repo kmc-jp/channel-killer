@@ -18,7 +18,7 @@
     "hubot-rules": "^0.1.1",
     "hubot-scripts": "^2.16.1",
     "hubot-shipit": "^0.2.0",
-    "hubot-slack": "https://github.com/slackhq/hubot-slack.git",
+    "hubot-slack": "git://github.com/slackhq/hubot-slack.git",
     "slack-client": "^1.4.1"
   },
   "engines": {
