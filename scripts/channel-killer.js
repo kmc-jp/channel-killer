@@ -1,7 +1,6 @@
 var SlackClient = require('slack-client');
 
-// var threshold = 30 * 24 * 60 * 60 * 1000;
-var threshold = 60 * 1000;
+var threshold = 30 * 24 * 60 * 60 * 1000;
 var options = {
   token: process.env.HUBOT_SLACK_TOKEN,
   autoReconnect: true,
