@@ -42,7 +42,9 @@ client.on('loggedIn', function(self, team) {
 client.on('raw_message', function(message) {
   switch (message.type) {
     case 'message':
-      client.channels[message.channel].latest = message;
+      if (client.channels[message.channel]) {
+        client.channels[message.channel].latest = message;
+      }
       break;
     case 'channel_left':
     case 'channel_unarchive':
