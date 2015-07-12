@@ -1,3 +1,16 @@
+// Description
+//   Responses or archives unused channels.
+//
+// Configuration:
+//   None
+//
+// Commands:
+//   @hubot list ([0-9]+)days - returns unused channels
+//   @hubot kill ([0-9]+)days - archives unused channels
+//
+// Author:
+//   tyage <namatyage@gmail.com>
+
 var SlackClient = require('slack-client');
 
 var options = {
