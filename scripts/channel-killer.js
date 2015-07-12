@@ -81,8 +81,9 @@ module.exports = function(robot) {
 
   // say the list of channels to be killed
   robot.respond(/list ([0-9]+)days/i, function(res) {
-    var threshold = parseInt(res.match[1]) * 24 * 60 * 60 * 1000;
-    res.reply("Following channels are not used for " + threshold + "days:");
+    var days = parseInt(res.match[1]);
+    var threshold = days * 24 * 60 * 60 * 1000;
+    res.reply("Following channels are not used for " + days + "days:");
 
     var channels = getUnusedChannels(threshold).map(function(id) {
       return client.channels[id].name;
