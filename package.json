@@ -5,6 +5,7 @@
   "author": "tyage <namatyage@gmail.com>",
   "description": "I will kill channels! HAHAHA!",
   "dependencies": {
+    "forever": "^0.14.2",
     "hubot": "^2.13.2",
     "hubot-diagnostics": "0.0.1",
     "hubot-google-images": "^0.1.5",

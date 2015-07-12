@@ -18,3 +18,11 @@ You need a user's slack token that starts with `xoxp-` (not a bot user's token!)
     - Shows the list of channels that will be archived
 - @username kill
     - Archive unused channels
+
+## Persist Channel Killer's process
+
+You can do it with forever.js
+
+```sh
+$ ./node_modules/.bin/forever start -c HUBOT_SLACK_TOKEN="SLACK_TOKEN" ./bin/hubot --adapter slack
+```
