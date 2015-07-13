@@ -71,6 +71,9 @@ client.on('raw_message', function(message) {
     default:
   }
 });
+client.on('close', function() {
+  client.reconnect();
+});
 
 module.exports = function(robot) {
   var formatChannels = function(channels) {
@@ -83,7 +86,7 @@ module.exports = function(robot) {
   robot.respond(/list ([0-9]+)days/i, function(res) {
     var days = parseInt(res.match[1]);
     var threshold = days * 24 * 60 * 60 * 1000;
-    res.reply("Following channels are not used for " + days + "days:");
+    res.reply('Following channels are not used for ' + days + 'days:');
 
     var channels = getUnusedChannels(threshold).map(function(id) {
       return client.channels[id].name;
@@ -94,7 +97,7 @@ module.exports = function(robot) {
   // archive the channel
   robot.respond(/kill ([0-9]+)days/i, function(res) {
     var threshold = parseInt(res.match[1]) * 24 * 60 * 60 * 1000;
-    res.reply("Following channels will be archived:");
+    res.reply('Following channels will be archived:');
 
     var channels = getUnusedChannels(threshold).map(function(id) {
       client._apiCall('channels.archive', { channel: id });
