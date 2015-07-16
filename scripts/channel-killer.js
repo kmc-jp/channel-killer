@@ -71,9 +71,6 @@ client.on('raw_message', function(message) {
     default:
   }
 });
-client.on('close', function() {
-  client.reconnect();
-});
 
 module.exports = function(robot) {
   var formatChannels = function(channels) {
