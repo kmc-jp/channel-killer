@@ -5,11 +5,11 @@
   "author": "tyage <namatyage@gmail.com>",
   "description": "I will kill channels! HAHAHA!",
   "dependencies": {
-    "forever": "^0.14.2",
+    "forever": "^0.15.2",
     "hubot": "^2.13.2",
-    "hubot-help": "^0.1.1",
-    "hubot-slack": "git://github.com/slackhq/hubot-slack.git",
-    "slack-client": "^1.4.1"
+    "hubot-help": "^0.2.0",
+    "hubot-slack": "^4.0.2",
+    "slack-client": "^2.0.6"
   },
   "engines": {
     "node": "0.10.x"
