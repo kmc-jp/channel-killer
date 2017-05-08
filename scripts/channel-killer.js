@@ -35,6 +35,10 @@ var getChannel = function(id) {
   var index = getChannelIndex(id);
   return channels[index];
 };
+var deleteChannel = function(id) {
+  var index = getChannelIndex(id);
+  delete channels[index];
+};
 var updateChannelInfo = function(id) {
   web.channels.info(id).then(function(info) {
     var index = getChannelIndex(id);
@@ -103,6 +107,9 @@ rtm.on(RTM_EVENTS.CHANNEL_UNARCHIVE, function(message) {
 });
 rtm.on(RTM_EVENTS.CHANNEL_CREATED, function(message) {
   joinChannel(message.channel);
+});
+rtm.on(RTM_EVENTS.CHANNEL_DELETED, function(message) {
+  deleteChannel(message.channel);
 });
 
 module.exports = function(robot) {
