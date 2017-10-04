@@ -65,6 +65,11 @@ var joinAllChannels = function() {
     });
   });
 };
+var updateChannelsInfo = function(channels) {
+  channels.forEach(function(channel) {
+    updateChannelInfo(channel.id);
+  });
+};
 
 var isChannelUnused = function(channel, threshold) {
   if (channel.is_archived) {
@@ -91,6 +96,7 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function(rtmStartData) {
   console.log('logged in');
   channels = rtmStartData.channels;
   joinAllChannels();
+  updateChannelsInfo(channels);
 });
 rtm.on(RTM_EVENTS.MESSAGE, function(message) {
   var channel = getChannel(message.channel);
