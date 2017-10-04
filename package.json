@@ -1,7 +1,6 @@
 {
   "name": "channel-killer",
   "version": "0.0.0",
-  "private": true,
   "author": "tyage <namatyage@gmail.com>",
   "description": "I will kill channels! HAHAHA!",
   "dependencies": {
@@ -10,8 +9,5 @@
     "hubot": "^2.19.0",
     "hubot-help": "^0.2.2",
     "hubot-slack": "^4.4.0"
-  },
-  "engines": {
-    "node": "0.10.x"
   }
 }

@@ -48,8 +48,13 @@ var updateChannelInfo = function(id) {
   });
 };
 var joinChannel = function(channel) {
-  web.channels.join(channel.name);
-  updateChannelInfo(channel.id);
+  web.channels.join(channel.name, (err, res) => {
+    if (err) {
+      console.log(`can not join in ${channel.name}`);
+    } else {
+      updateChannelInfo(channel.id);
+    }
+  });
 };
 var joinAllChannels = function() {
   web.channels.list().then(function(info) {
