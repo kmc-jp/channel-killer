@@ -59,7 +59,7 @@ var joinChannel = function(channel) {
 var joinAllChannels = function() {
   web.channels.list().then(function(info) {
     info.channels.forEach(function(channel) {
-      if (!channel.is_member) {
+      if (!channel.is_member && !channel.is_archived) {
         joinChannel(channel);
       }
     });
