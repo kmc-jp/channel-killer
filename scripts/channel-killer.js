@@ -11,89 +11,93 @@
 // Author:
 //   tyage <namatyage@gmail.com>
 
-var RtmClient = require('@slack/client').RtmClient;
-var WebClient = require('@slack/client').WebClient;
-var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
+const { RtmClient } = require('@slack/rtm-api')
+const { WebClient } = require('@slack/web-api')
 
-var token = process.env.HUBOT_SLACK_TOKEN;
-var web = new WebClient(token);
-var rtm = new RtmClient(token);
+const token = process.env.HUBOT_SLACK_TOKEN
+const web = new WebClient(token)
+const rtm = new RtmClient(token)
 
-var channels = [];
+const channelsCache = new Map() 
+const getChannel = (id) => channelsCache.get(id)
+const deleteChannel = (id) => {
+  channelsCache.delete(id)
+}
 
-var getChannelIndex = function(id) {
-  var result;
-  channels.forEach(function(channel, i) {
-    if (channel.id === id) {
-      result = i;
+const sleep = (milsec) => {
+  return new Promise((res, rej) => {
+    setTimeout(() => res(), milsec)
+  })
+} 
+
+// channelのcacheを更新する
+const updateChannelInfo = async (id) => {
+  const channelInfo = getChannel(id)
+  if (!channelInfo) {
+    return
+  }
+  const info = await web.channels.info({ channel: id })
+  if (!info) {
+    return
+  }
+  channelInfo.latest = info.channel.latest
+}
+// channelにjoin. 入れない場合は API limit に引っかかっている可能性があるのでwaitを入れる
+const joinChannel = async (id) => {
+  const channel = getChannel(id)
+  try {
+    await web.channels.join({ name: channel.name })
+    updateChannelInfo(id)
+  } catch (e) {
+    console.log(`can not join in ${channel.name} . wait 10sec`)
+    await sleep(1000 * 10)
+  }
+}
+const joinAllChannels = async () => {
+  const channelList = await web.channels.list({ exclude_archived: true, exclude_members: true }).channels
+  for (let channel of channelList) {
+    if (!channel.is_member && !channel.is_archived) {
+      await joinChannel(channel.id)
     }
-  });
-  return result;
-};
-var getChannel = function(id) {
-  var index = getChannelIndex(id);
-  return channels[index];
-};
-var deleteChannel = function(id) {
-  var index = getChannelIndex(id);
-  delete channels[index];
-};
-var updateChannelInfo = function(id) {
-  web.channels.info(id).then(function(info) {
-    var index = getChannelIndex(id);
-    if (index) {
-      channels[index].latest = info.channel.latest;
-    }
-  });
-};
-var joinChannel = function(channel) {
-  web.channels.join(channel.name, (err, res) => {
-    if (err) {
-      console.log(`can not join in ${channel.name}`);
-    } else {
-      updateChannelInfo(channel.id);
-    }
-  });
-};
-var joinAllChannels = function() {
-  web.channels.list().then(function(info) {
-    info.channels.forEach(function(channel) {
-      if (!channel.is_member && !channel.is_archived) {
-        joinChannel(channel);
-      }
-    });
-  });
-};
-var updateChannelsInfo = function(channels) {
-  channels.forEach(function(channel) {
-    updateChannelInfo(channel.id);
-  });
-};
-
-var isChannelUnused = function(channel, threshold) {
+  }
+}
+const updateChannelsInfo = async (channels) => {
+  for (let channel of channels) {
+    await updateChannelInfo(channel.id)
+  }
+}
+const isChannelUnused = async (id, threshold) => {
+  const channel = getChannel(id)
   if (channel.is_archived) {
-    return false;
+    return false
   }
 
   // channel.latestはjoinしているチャンネルしか取得できないのでjoinする
+  // joinするとlatestが更新されてしまうので、結果を取得しても意味がない。そのままreturnする
   if (!channel.latest) {
-    joinChannel(channel);
-    return false;
+    await joinChannel(id)
+    return false
   }
 
-  var lastUpdate = new Date(channel.latest.ts * 1000);
-  return (new Date() - lastUpdate) > threshold;
-};
-var getUnusedChannels = function(threshold) {
-  return channels.filter(function(channel) {
-    return isChannelUnused(channel, threshold);
-  });
-};
+  const lastUpdate = new Date(channel.latest.ts * 1000);
+  const now = new Date()
+  const isUnsed = (now - lastUpdate) > threshold
+  return isUnsed
+}
+const getUnusedChannels = async (threshold) => {
+  const unusedChannels = []
+  for (const id of channelsCache.keys()) {
+    if (await isChannelUnused(id, threshold)) {
+      unusedChannels.push(id)
+    }
+  }
+  return unusedChannels
+}
 
-rtm.start();
-rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function(rtmStartData) {
-  console.log('logged in');
+// RTM
+rtm.start()
+rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
+  console.log('logged in')
   channels = rtmStartData.channels;
   joinAllChannels();
   updateChannelsInfo(channels);
@@ -123,6 +127,7 @@ rtm.on(RTM_EVENTS.CHANNEL_DELETED, function(message) {
   deleteChannel(message.channel);
 });
 
+// hubot
 module.exports = function(robot) {
   var formatChannels = function(channels) {
     return channels.map(function(channel) {
