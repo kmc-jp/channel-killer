@@ -18,18 +18,22 @@ const token = process.env.HUBOT_SLACK_TOKEN
 const web = new WebClient(token)
 const rtm = new RtmClient(token)
 
-const channelsCache = new Map() 
-const getChannel = (id) => channelsCache.get(id)
-const deleteChannel = (id) => {
-  channelsCache.delete(id)
-}
-
 const sleep = (milsec) => {
   return new Promise((res, rej) => {
     setTimeout(() => res(), milsec)
   })
 } 
 
+const channelsCache = new Map()
+const initChannelsCache = (channels) => {
+  for (let channel of channels) {
+    channelsCache.set(channel.id, channel)
+  }
+}
+const getChannel = (id) => channelsCache.get(id)
+const deleteChannel = (id) => {
+  channelsCache.delete(id)
+}
 // channelのcacheを更新する
 // 更新できない場合は API limit に引っかかっている可能性があるのでwaitを入れる
 const updateChannelInfo = async (id) => {
@@ -51,6 +55,12 @@ const updateChannelInfo = async (id) => {
     return
   }
 }
+const updateAllChannelsCache = async () => {
+  for (let id of channelsCache.keys()) {
+    await updateChannelInfo(id)
+  }
+}
+
 // channelにjoin
 // 入れない場合は API limit に引っかかっている可能性があるのでwaitを入れる
 const joinChannel = async (id) => {
@@ -71,11 +81,6 @@ const joinAllChannels = async () => {
     if (!channel.is_member && !channel.is_archived) {
       await joinChannel(channel.id)
     }
-  }
-}
-const updateAllChannelsCache = async () => {
-  for (let id of channelsCache.keys()) {
-    await updateChannelInfo(id)
   }
 }
 const isChannelUnused = async (id, threshold) => {
@@ -110,7 +115,7 @@ const getUnusedChannels = async (threshold) => {
 rtm.start().catch(console.error)
 rtm.on('ready', async (rtmStartData) => {
   console.log('logged in')
-  initChannels(rtmStartData.channels)
+  initChannelsCache(rtmStartData.channels)
   await joinAllChannels()
   await updateAllChannelsCache()
 })
