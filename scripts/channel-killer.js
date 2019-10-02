@@ -140,33 +140,34 @@ rtm.on('channel_deleted', async (message) => {
 });
 
 // hubot
-module.exports = function(robot) {
-  var formatChannels = function(channels) {
+module.exports = (robot) => {
+  const formatChannels = (channels) => {
     return channels.map(function(channel) {
-      return "#" + channel.name;
-    }).join(' ');
-  };
+      return "#" + channel.name
+    }).join(' ')
+  }
 
   // say the list of channels to be killed
-  robot.hear(new RegExp(robot.name + ' list ([0-9]+)days', 'i'), function(res) {
-    var days = parseInt(res.match[1]);
-    var threshold = days * 24 * 60 * 60 * 1000;
-    res.reply('Following channels are not used for ' + days + 'days:');
+  robot.hear(new RegExp(robot.name + ' list ([0-9]+)days', 'i'), async (res) => {
+    const days = parseInt(res.match[1])
+    const threshold = days * 24 * 60 * 60 * 1000
 
-    var channels = getUnusedChannels(threshold);
-    res.reply(formatChannels(channels));
+    const channels = await getUnusedChannels(threshold)
+    const unusedChannels = formatChannels(channels)
+    res.reply(`Following channels are not used for ${days} days: ${unusedChannels}`)
   });
 
   // archive the channel
-  robot.hear(new RegExp(robot.name + ' kill ([0-9]+)days', 'i'), function(res) {
-    var days = parseInt(res.match[1]);
-    var threshold = days * 24 * 60 * 60 * 1000;
-    res.reply('Following channels will be archived:');
+  robot.hear(new RegExp(robot.name + ' kill ([0-9]+)days', 'i'), async (res) => {
+    const days = parseInt(res.match[1])
+    const threshold = days * 24 * 60 * 60 * 1000
+    res.reply('Following channels will be archived:')
 
-    var channels = getUnusedChannels(threshold);
-    channels.forEach(function(channel) {
-      web.channels.archive(channel.id);
-    });
-    res.reply(formatChannels(channels));
+    const channels = await getUnusedChannels(threshold);
+    channels.forEach((channel) => {
+      await web.channels.archive(channel.id);
+    })
+    const archivedChannels = formatChannels(channels);
+    res.reply(`Following channels will be archived: ${archivedChannels}`)
   });
 };
