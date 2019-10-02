@@ -31,24 +31,36 @@ const sleep = (milsec) => {
 } 
 
 // channelのcacheを更新する
+// 更新できない場合は API limit に引っかかっている可能性があるのでwaitを入れる
 const updateChannelInfo = async (id) => {
-  const channelInfo = getChannel(id)
-  if (!channelInfo) {
+  const channel = getChannel(id)
+  if (!channel) {
     return
   }
-  const info = await web.channels.info({ channel: id })
-  if (!info) {
+  try {
+    const newData = await web.channels.info({ channel: id })
+    if (!newData) {
+      return
+    }
+    channel.latest = newData.channel.latest
+  } catch (e) {
+    // TODO: retry X times
+    // XXX: if it always fail, channel.latest will not be updated. and channel-killer may kills the channel
+    console.log(`can not get info of ${channel.name} . wait 10sec`)
+    await sleep(1000 * 10)
     return
   }
-  channelInfo.latest = info.channel.latest
 }
-// channelにjoin. 入れない場合は API limit に引っかかっている可能性があるのでwaitを入れる
+// channelにjoin
+// 入れない場合は API limit に引っかかっている可能性があるのでwaitを入れる
 const joinChannel = async (id) => {
   const channel = getChannel(id)
   try {
     await web.channels.join({ name: channel.name })
     updateChannelInfo(id)
   } catch (e) {
+    // TODO: retry X times
+    // XXX: if it always fail, channel.latest will not be updated. and channel-killer may kills the channel
     console.log(`can not join in ${channel.name} . wait 10sec`)
     await sleep(1000 * 10)
   }
@@ -61,9 +73,9 @@ const joinAllChannels = async () => {
     }
   }
 }
-const updateChannelsInfo = async (channels) => {
-  for (let channel of channels) {
-    await updateChannelInfo(channel.id)
+const updateAllChannelsCache = async () => {
+  for (let id of channelsCache.keys()) {
+    await updateChannelInfo(id)
   }
 }
 const isChannelUnused = async (id, threshold) => {
@@ -95,36 +107,36 @@ const getUnusedChannels = async (threshold) => {
 }
 
 // RTM
-rtm.start()
-rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
+rtm.start().catch(console.error)
+rtm.on('ready', async (rtmStartData) => {
   console.log('logged in')
-  channels = rtmStartData.channels;
-  joinAllChannels();
-  updateChannelsInfo(channels);
-});
-rtm.on(RTM_EVENTS.MESSAGE, function(message) {
-  var channel = getChannel(message.channel);
+  initChannels(rtmStartData.channels)
+  await joinAllChannels()
+  await updateAllChannelsCache()
+})
+rtm.on('message', async (message) => {
+  const channel = getChannel(message.channel)
   if (channel) {
-    channel.latest = message;
+    channel.latest = message
   }
-});
-rtm.on(RTM_EVENTS.CHANNEL_LEFT, function(message) {
-  var channel = getChannel(message.channel);
+})
+rtm.on('channel_left', async (message) => {
+  const channel = getChannel(message.channel)
   if (channel) {
-    joinChannel(channel);
+    await joinChannel(channel.id)
   }
-});
-rtm.on(RTM_EVENTS.CHANNEL_UNARCHIVE, function(message) {
-  var channel = getChannel(message.channel);
+})
+rtm.on('channel_unarchive', async (message) => {
+  const channel = getChannel(message.channel)
   if (channel) {
-    joinChannel(channel);
+    await joinChannel(channel.id)
   }
-});
-rtm.on(RTM_EVENTS.CHANNEL_CREATED, function(message) {
-  joinChannel(message.channel);
-});
-rtm.on(RTM_EVENTS.CHANNEL_DELETED, function(message) {
-  deleteChannel(message.channel);
+})
+rtm.on('channel_created', async (message) => {
+  await joinChannel(message.channel.id)
+})
+rtm.on('channel_deleted', async (message) => {
+  deleteChannel(message.channel.id);
 });
 
 // hubot
