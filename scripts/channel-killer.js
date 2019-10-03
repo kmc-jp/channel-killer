@@ -8,7 +8,7 @@
 //   hubot list ([0-9]+)days - returns unused channels
 //   hubot kill ([0-9]+)days - archives unused channels
 //   hubot status - returns bot status
-//   hubot reload data - request new channel info
+//   hubot reload data - request latest channels info
 //
 // Author:
 //   tyage <namatyage@gmail.com>
@@ -219,7 +219,7 @@ module.exports = (robot) => {
     res.reply(`Following channel's information is not fetched yet: ${unUpdatedChannels}`)
   })
 
-  // check status
+  // fetch all channels data again
   robot.hear(new RegExp(robot.name + ' reload data', 'i'), async (res) => {
     await updateAllChannelsCache()
   })
