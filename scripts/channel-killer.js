@@ -103,16 +103,13 @@ const joinAllChannels = async () => {
     }
   }
 }
-const isChannelUnused = async (id, threshold) => {
+const isChannelUnused = (id, threshold) => {
   const channel = getChannel(id)
   if (channel.is_archived) {
     return false
   }
-
-  // channel.latestはjoinしているチャンネルしか取得できないのでjoinする
-  // joinするとlatestが更新されてしまうので、結果を取得しても意味がない。そのままreturnする
-  if (!channel.latest) {
-    await joinChannel(id)
+  // if we don't have latest information, skip this channel
+  if (!channel.latest || !isChannelUpdated(channel.id)) {
     return false
   }
 
@@ -121,10 +118,10 @@ const isChannelUnused = async (id, threshold) => {
   const isUnsed = (now - lastUpdate) > threshold
   return isUnsed
 }
-const getUnusedChannels = async (threshold) => {
+const getUnusedChannels = (threshold) => {
   const unusedChannels = []
   for (const id of channelsCache.keys()) {
-    if (await isChannelUnused(id, threshold)) {
+    if (isChannelUnused(id, threshold)) {
       unusedChannels.push(id)
     }
   }
@@ -204,7 +201,7 @@ module.exports = (robot) => {
     const days = parseInt(res.match[1])
     const threshold = days * 24 * 60 * 60 * 1000
 
-    const channels = await getUnusedChannels(threshold)
+    const channels = getUnusedChannels(threshold)
     const unusedChannels = formatChannels(channels)
     res.reply(`Following channels are not used for ${days} days: ${unusedChannels}`)
   })
@@ -214,12 +211,11 @@ module.exports = (robot) => {
     const days = parseInt(res.match[1])
     const threshold = days * 24 * 60 * 60 * 1000
 
-    const channels = await getUnusedChannels(threshold)
+    res.reply(`Started archiving process...`)
+    const channels = getUnusedChannels(threshold)
     for (let channel of channels) {
       // check if the channel information is updated properly. otherwise, we may have missed latest updates
-      if (isChannelUpdated(channel.id)) {
-        await web.channels.archive(channel.id)
-      }
+      await web.channels.archive(channel.id)
     }
     const archivedChannels = formatChannels(channels)
     res.reply(`Following channels will be archived: ${archivedChannels}`)
