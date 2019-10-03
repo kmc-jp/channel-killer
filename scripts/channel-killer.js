@@ -166,6 +166,19 @@ rtm.on('channel_created', async (message) => {
 rtm.on('channel_deleted', async (message) => {
   deleteChannel(message.channel.id)
 })
+// call help if something went wrong
+rtm.on('reconnecting', async () => {
+  await web.chat.postMessage({
+    channel: channelsCache.keys()[0],
+    text: 'RTM reconnecting!'
+  })
+})
+rtm.on('disconnecting', async () => {
+  await web.chat.postMessage({
+    channel: channelsCache.keys()[0],
+    text: 'RTM disconnecting!'
+  })
+})
 rtm.on('disconnected', async () => {
   // if the rtm is disconnected, we no longer get latest information
   // so we make all channelUpdatedMap false and post help
