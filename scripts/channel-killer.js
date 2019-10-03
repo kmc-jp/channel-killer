@@ -82,6 +82,7 @@ const getUnUpdatedChannels = () => {
 
 // channelにjoin
 // 入れない場合は API limit に引っかかっている可能性があるのでwaitを入れる
+// channelがarchiveされているときも入れない
 const joinChannel = async (id) => {
   const channel = getChannel(id)
   try {
