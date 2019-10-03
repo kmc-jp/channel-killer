@@ -51,7 +51,6 @@ const updateChannelInfo = async (id) => {
   }
   try {
     const newData = await web.channels.info({ channel: id })
-    console.log(newData)
     if (!newData) {
       throw new Exception()
     }
