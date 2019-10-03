@@ -11,12 +11,13 @@
 // Author:
 //   tyage <namatyage@gmail.com>
 
-const { RtmClient } = require('@slack/rtm-api')
+const { RTMClient } = require('@slack/rtm-api')
 const { WebClient } = require('@slack/web-api')
 
 const token = process.env.HUBOT_SLACK_TOKEN
 const web = new WebClient(token)
-const rtm = new RtmClient(token)
+const rtm = new RTMClient(token)
+rtm.useRtmConnect = false
 
 const sleep = (milsec) => {
   return new Promise((res, rej) => {
@@ -76,7 +77,7 @@ const joinChannel = async (id) => {
   }
 }
 const joinAllChannels = async () => {
-  const channelList = await web.channels.list({ exclude_archived: true, exclude_members: true }).channels
+  const channelList = (await web.channels.list({ exclude_archived: true, exclude_members: true })).channels
   for (let channel of channelList) {
     if (!channel.is_member && !channel.is_archived) {
       await joinChannel(channel.id)
@@ -113,11 +114,14 @@ const getUnusedChannels = async (threshold) => {
 
 // RTM
 rtm.start().catch(console.error)
-rtm.on('ready', async (rtmStartData) => {
+rtm.on('authenticated', async (initialData) => {
   console.log('logged in')
-  initChannelsCache(rtmStartData.channels)
-  await joinAllChannels()
-  await updateAllChannelsCache()
+  // initialData.channels is set only when we received the response of rtm.start
+  if (initialData.channels) {
+    initChannelsCache(initialData.channels)
+    await joinAllChannels()
+    await updateAllChannelsCache()
+  }
 })
 rtm.on('message', async (message) => {
   const channel = getChannel(message.channel)
