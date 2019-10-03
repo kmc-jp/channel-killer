@@ -192,7 +192,7 @@ rtm.on('disconnected', async () => {
 module.exports = (robot) => {
   const formatChannels = (channels) => {
     return channels.map(function(id) {
-      const channel = getChannel(channel)
+      const channel = getChannel(id)
       return "#" + channel.name
     }).join(' ')
   }
