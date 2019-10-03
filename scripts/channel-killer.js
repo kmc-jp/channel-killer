@@ -7,6 +7,8 @@
 // Commands:
 //   hubot list ([0-9]+)days - returns unused channels
 //   hubot kill ([0-9]+)days - archives unused channels
+//   hubot status - returns bot status
+//   hubot reload data - request new channel info
 //
 // Author:
 //   tyage <namatyage@gmail.com>
@@ -26,9 +28,14 @@ const sleep = (milsec) => {
 } 
 
 const channelsCache = new Map()
+const channelUpdatedMap = new Map()
 const initChannelsCache = (channels) => {
   for (let channel of channels) {
+    if (channel.is_archived || channel.is_private) {
+      continue
+    }
     channelsCache.set(channel.id, channel)
+    channelUpdatedMap.set(channel.id, false)
   }
 }
 const getChannel = (id) => channelsCache.get(id)
@@ -44,14 +51,16 @@ const updateChannelInfo = async (id) => {
   }
   try {
     const newData = await web.channels.info({ channel: id })
+    console.log(newData)
     if (!newData) {
-      return
+      throw new Exception()
     }
     channel.latest = newData.channel.latest
+    channelUpdatedMap.set(id, true)
   } catch (e) {
     // TODO: retry X times
-    // XXX: if it always fail, channel.latest will not be updated. and channel-killer may kills the channel
     console.log(`can not get info of ${channel.name} . wait 10sec`)
+    channelUpdatedMap.set(id, false)
     await sleep(1000 * 10)
     return
   }
@@ -60,6 +69,16 @@ const updateAllChannelsCache = async () => {
   for (let id of channelsCache.keys()) {
     await updateChannelInfo(id)
   }
+}
+const isChannelUpdated = (id) => channelUpdatedMap.get(id)
+const getUnUpdatedChannels = () => {
+  const result = []
+  for (let [id, value] of channelUpdatedMap.entries()) {
+    if (value === false) {
+      result.push(id)
+    }
+  }
+  return result
 }
 
 // channelにjoin
@@ -71,14 +90,15 @@ const joinChannel = async (id) => {
     updateChannelInfo(id)
   } catch (e) {
     // TODO: retry X times
-    // XXX: if it always fail, channel.latest will not be updated. and channel-killer may kills the channel
     console.log(`can not join in ${channel.name} . wait 10sec`)
+    channelUpdatedMap.set(id, false)
     await sleep(1000 * 10)
   }
 }
 const joinAllChannels = async () => {
   const channelList = (await web.channels.list({ exclude_archived: true, exclude_members: true })).channels
   for (let channel of channelList) {
+    // if it is not archived, channel-watcher try to join
     if (!channel.is_member && !channel.is_archived) {
       await joinChannel(channel.id)
     }
@@ -97,7 +117,7 @@ const isChannelUnused = async (id, threshold) => {
     return false
   }
 
-  const lastUpdate = new Date(channel.latest.ts * 1000);
+  const lastUpdate = new Date(channel.latest.ts * 1000)
   const now = new Date()
   const isUnsed = (now - lastUpdate) > threshold
   return isUnsed
@@ -145,8 +165,19 @@ rtm.on('channel_created', async (message) => {
   await joinChannel(message.channel.id)
 })
 rtm.on('channel_deleted', async (message) => {
-  deleteChannel(message.channel.id);
-});
+  deleteChannel(message.channel.id)
+})
+rtm.on('disconnected', async () => {
+  // if the rtm is disconnected, we no longer get latest information
+  // so we make all channelUpdatedMap false and post help
+  for (let id of channelUpdatedMap.keys()) {
+    channelUpdatedMap.set(id, false)
+  }
+  await web.chat.postMessage({
+    channel: channelsCache.keys()[0],
+    text: 'RTM disconnected! Someone please help me!'
+  })
+})
 
 // hubot
 module.exports = (robot) => {
@@ -164,19 +195,33 @@ module.exports = (robot) => {
     const channels = await getUnusedChannels(threshold)
     const unusedChannels = formatChannels(channels)
     res.reply(`Following channels are not used for ${days} days: ${unusedChannels}`)
-  });
+  })
 
   // archive the channel
   robot.hear(new RegExp(robot.name + ' kill ([0-9]+)days', 'i'), async (res) => {
     const days = parseInt(res.match[1])
     const threshold = days * 24 * 60 * 60 * 1000
-    res.reply('Following channels will be archived:')
 
-    const channels = await getUnusedChannels(threshold);
-    channels.forEach((channel) => {
-      await web.channels.archive(channel.id);
-    })
-    const archivedChannels = formatChannels(channels);
+    const channels = await getUnusedChannels(threshold)
+    for (let channel of channels) {
+      // check if the channel information is updated properly. otherwise, we may have missed latest updates
+      if (isChannelUpdated(channel.id)) {
+        await web.channels.archive(channel.id)
+      }
+    }
+    const archivedChannels = formatChannels(channels)
     res.reply(`Following channels will be archived: ${archivedChannels}`)
-  });
-};
+  })
+
+  // check status
+  robot.hear(new RegExp(robot.name + ' status', 'i'), async (res) => {
+    const channels = getUnUpdatedChannels().map(id => getChannel(id))
+    const unUpdatedChannels = formatChannels(channels)
+    res.reply(`Following channel's information is not fetched yet: ${unUpdatedChannels}`)
+  })
+
+  // check status
+  robot.hear(new RegExp(robot.name + ' reload data', 'i'), async (res) => {
+    await updateAllChannelsCache()
+  })
+}
