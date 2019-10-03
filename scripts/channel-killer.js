@@ -166,13 +166,13 @@ rtm.on('channel_deleted', async (message) => {
 // call help if something went wrong
 rtm.on('reconnecting', async () => {
   await web.chat.postMessage({
-    channel: channelsCache.keys()[0],
+    channel: channelsCache.keys().next().value,
     text: 'RTM reconnecting!'
   })
 })
 rtm.on('disconnecting', async () => {
   await web.chat.postMessage({
-    channel: channelsCache.keys()[0],
+    channel: channelsCache.keys().next().value,
     text: 'RTM disconnecting!'
   })
 })
@@ -183,7 +183,7 @@ rtm.on('disconnected', async () => {
     channelUpdatedMap.set(id, false)
   }
   await web.chat.postMessage({
-    channel: channelsCache.keys()[0],
+    channel: channelsCache.keys().next().value,
     text: 'RTM disconnected! Someone please help me!'
   })
 })
