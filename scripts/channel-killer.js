@@ -212,14 +212,13 @@ module.exports = (robot) => {
     const days = parseInt(res.match[1])
     const threshold = days * 24 * 60 * 60 * 1000
 
-    res.reply(`Started archiving process...`)
     const channels = getUnusedChannels(threshold)
-    for (let id of channels) {
-      // check if the channel information is updated properly. otherwise, we may have missed latest updates
-      await web.channels.archive(id)
-    }
     const archivedChannels = formatChannels(channels)
     res.reply(`Following channels will be archived: ${archivedChannels}`)
+    for (let id of channels) {
+      // check if the channel information is updated properly. otherwise, we may have missed latest updates
+      await web.channels.archive({ channel: id })
+    }
   })
 
   // check status
