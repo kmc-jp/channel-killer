@@ -191,7 +191,8 @@ rtm.on('disconnected', async () => {
 // hubot
 module.exports = (robot) => {
   const formatChannels = (channels) => {
-    return channels.map(function(channel) {
+    return channels.map(function(id) {
+      const channel = getChannel(channel)
       return "#" + channel.name
     }).join(' ')
   }
@@ -213,9 +214,9 @@ module.exports = (robot) => {
 
     res.reply(`Started archiving process...`)
     const channels = getUnusedChannels(threshold)
-    for (let channel of channels) {
+    for (let id of channels) {
       // check if the channel information is updated properly. otherwise, we may have missed latest updates
-      await web.channels.archive(channel.id)
+      await web.channels.archive(id)
     }
     const archivedChannels = formatChannels(channels)
     res.reply(`Following channels will be archived: ${archivedChannels}`)
@@ -223,8 +224,7 @@ module.exports = (robot) => {
 
   // check status
   robot.hear(new RegExp(robot.name + ' status', 'i'), async (res) => {
-    const channels = getUnUpdatedChannels().map(id => getChannel(id))
-    const unUpdatedChannels = formatChannels(channels)
+    const unUpdatedChannels = formatChannels(getUnUpdatedChannels())
     res.reply(`Following channel's information is not fetched yet: ${unUpdatedChannels}`)
   })
 
