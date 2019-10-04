@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "author": "tyage <namatyage@gmail.com>",
   "description": "Archive channels not used recently.",
+  "scripts": {
+    "start": "forever start node_modules/.bin/hubot --adapter slack",
+    "stop": "forever stopall"
+  },
   "dependencies": {
     "@slack/rtm-api": "^5.0.3",
     "@slack/web-api": "^5.2.0",

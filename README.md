@@ -11,7 +11,7 @@ You need a user's slack token that starts with `xoxp-` (not a bot user's token!)
 You can start Channel Killer by this command:
 
 ```sh
-$ ./app.sh start
+$ npm run start
 ```
 
 ## Channel Killer's Command
@@ -24,5 +24,5 @@ $ ./app.sh start
 ## Stop Channel Killer
 
 ```sh
-$ ./app.sh stop
+$ npm run stop
 ```
