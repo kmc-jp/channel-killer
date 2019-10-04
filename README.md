@@ -4,7 +4,8 @@ Automatically archive unused channels.
 
 ## Run Channel Killer
 
-Copy `app.sh.example` to `app.sh` and edit `HUBOT_SLACK_TOKEN`
+Copy `.env.sample` to `.env`
+Edit `HUBOT_SLACK_TOKEN` and `LOG_EXPORT_CHANNEL` in `.env`
 
 You need a user's slack token that starts with `xoxp-` (not a bot user's token!).
 

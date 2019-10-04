@@ -17,6 +17,7 @@ const { RTMClient } = require('@slack/rtm-api')
 const { WebClient } = require('@slack/web-api')
 
 const token = process.env.HUBOT_SLACK_TOKEN
+const logExportChannel = process.env.LOG_EXPORT_CHANNEL
 const web = new WebClient(token)
 const rtm = new RTMClient(token)
 rtm.useRtmConnect = false
@@ -167,13 +168,13 @@ rtm.on('channel_deleted', async (message) => {
 // call help if something went wrong
 rtm.on('reconnecting', async () => {
   await web.chat.postMessage({
-    channel: channelsCache.keys().next().value,
+    channel: logExportChannel,
     text: 'RTM reconnecting!'
   })
 })
 rtm.on('disconnecting', async () => {
   await web.chat.postMessage({
-    channel: channelsCache.keys().next().value,
+    channel: logExportChannel,
     text: 'RTM disconnecting!'
   })
 })
@@ -184,7 +185,7 @@ rtm.on('disconnected', async () => {
     channelUpdatedMap.set(id, false)
   }
   await web.chat.postMessage({
-    channel: channelsCache.keys().next().value,
+    channel: logExportChannel,
     text: 'RTM disconnected! Someone please help me!'
   })
 })

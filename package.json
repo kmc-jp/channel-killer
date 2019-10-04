@@ -4,7 +4,7 @@
   "author": "tyage <namatyage@gmail.com>",
   "description": "Archive channels not used recently.",
   "scripts": {
-    "start": "forever start node_modules/.bin/hubot --adapter slack",
+    "start": "forever start -c bash ./bin/hubot --adapter slack",
     "stop": "forever stopall"
   },
   "dependencies": {
