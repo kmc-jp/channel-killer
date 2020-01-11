@@ -91,7 +91,7 @@ const joinChannel = async (id) => {
     updateChannelInfo(id)
   } catch (e) {
     // TODO: retry X times
-    console.log(`can not join in ${channel.name} . wait 10sec`)
+    console.log(`can not join in ${channel && channel.name} . wait 10sec`)
     channelUpdatedMap.set(id, false)
     await sleep(1000 * 10)
   }
