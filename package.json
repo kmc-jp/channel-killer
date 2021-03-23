@@ -1,18 +1,15 @@
 {
   "name": "channel-killer",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": "tyage <namatyage@gmail.com>",
   "description": "Archive channels not used recently.",
   "scripts": {
-    "start": "forever start -c bash ./bin/hubot --adapter slack",
+    "start": "node ./scripts/channel-killer.js",
     "stop": "forever stopall"
   },
   "dependencies": {
-    "@slack/rtm-api": "^5.0.3",
-    "@slack/web-api": "^5.2.0",
-    "forever": "^1.0.0",
-    "hubot": "^3.3.2",
-    "hubot-help": "^1.0.1",
-    "hubot-slack": "^4.7.1"
+    "@slack/bolt": "^3.3.0",
+    "dotenv": "^8.2.0",
+    "forever": "^3.0.4"
   }
 }
