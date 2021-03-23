@@ -4,7 +4,7 @@
   "author": "tyage <namatyage@gmail.com>",
   "description": "Archive channels not used recently.",
   "scripts": {
-    "start": "node ./scripts/channel-killer.js",
+    "start": "node app.js",
     "stop": "forever stopall"
   },
   "dependencies": {
