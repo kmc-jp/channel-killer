@@ -13,6 +13,26 @@
 
 const { App } = require('@slack/bolt');
 require('dotenv').config();
+const fs = require('fs');
+
+const cacheFile = 'cache.json';
+
+let cachedData = null;
+const readCache = () => {
+  if (!cachedData) {
+    try {
+      const buf = fs.readFileSync(cacheFile);
+      cachedData = JSON.parse(buf);
+    } catch {}
+  }
+  return cachedData;
+};
+const writeCache = (data) => {
+  const buf = JSON.stringify(data);
+  fs.writeFileSync(cacheFile, buf);
+  cachedData = data;
+};
+
 const findAllChannels = async (app, cursor = '') => {
   const { channels, response_metadata: { next_cursor: nextCursor } } = await app.client.conversations.list({
     token: process.env.SLACK_BOT_TOKEN,
@@ -37,7 +57,21 @@ const joinChannel = async (app, channel) => {
 };
 
 const isChannelDisused = async (app, channel, threshold) => {
-  // TODO: cache in file
+  const isMessageOld = (message, threshold) => {
+    const messageTime = new Date(message.ts * 1000);
+    const now = new Date();
+    const thresholdMillSec = threshold * 24 * 60 * 60 * 1000;
+    const isDisused = (now - messageTime) > thresholdMillSec;
+    return isDisused;
+  };
+
+  const cachedChannels = readCache() || {};
+  const cachedChannel = cachedChannels[channel];
+  // if cached data is still new, return and do not update information
+  if (cachedChannel && !isMessageOld(cachedChannel.lastMessage, threshold)) {
+    return false;
+  }
+
   const { messages } = await app.client.conversations.history({
     token: process.env.SLACK_BOT_TOKEN,
     channel,
@@ -48,11 +82,16 @@ const isChannelDisused = async (app, channel, threshold) => {
     return false;
   }
   // TODO: if last message is join event, look next message
-  const lastUpdate = new Date(lastMessage.ts * 1000);
-  const now = new Date();
-  const isDisused = (now - lastUpdate) > threshold * 60 * 60 * 24;
-  return isDisused;
-}
+
+  // update cache
+  cachedChannels[channel] = {
+    channel,
+    lastMessage
+  };
+  writeCache(cachedChannels);
+
+  return isMessageOld(lastMessage, threshold);
+};
 
 const findDisusedChannels = async (app, threshold) => {
   const channels = await findAllChannels(app);
@@ -88,7 +127,7 @@ app.event('app_mention', async({ event, say }) => {
     if (matches) {
       const day = matches[1];
       const channels = await findDisusedChannels(app, day);
-      await say(`channels unused for ${day}days: ${channels}`);
+      await say(`channels disused recent ${day}days: ${channels}`);
     }
 
   // archive
@@ -100,4 +139,6 @@ app.event('app_mention', async({ event, say }) => {
 (async () => {
   await app.start();
   console.log('⚡️ Bolt app started');
+
+  // await findDisusedChannels(app, 100);
 })();
