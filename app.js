@@ -23,7 +23,7 @@ const readCache = () => {
     try {
       const buf = fs.readFileSync(cacheFile);
       cachedData = JSON.parse(buf);
-    } catch {}
+    } catch (_) {}
   }
   return cachedData;
 };
