@@ -4,12 +4,11 @@
   "author": "tyage <namatyage@gmail.com>",
   "description": "Archive channels not used recently.",
   "scripts": {
-    "start": "node app.js",
+    "start": "forever -c node app.js",
     "stop": "forever stopall"
   },
   "dependencies": {
     "@slack/bolt": "^3.3.0",
-    "dotenv": "^8.2.0",
     "forever": "^3.0.4"
   }
 }

@@ -71,10 +71,6 @@ const findDisusedChannels = async (app, threshold) => {
   return disusedChannels;
 }
 
-const listChannels = () => {
-  return 'poe'
-}
-
 const app = new App({
   logLevel: 'debug',
   token: process.env.SLACK_BOT_TOKEN,
@@ -83,18 +79,20 @@ const app = new App({
 });
 
 app.event('app_mention', async({ event, say }) => {
-  const message = event.text
+  const message = event.text;
+  const listPattern = /list ([0-9]+)days/;
+  const archivePattern = /archive ([0-9]+)days/;
   // list 
-  if (message.includes('list')) {
-    const matches = message.match(/list ([0-9]+)days/);
+  if (message.match(listPattern)) {
+    const matches = message.match(listPattern);
     if (matches) {
       const day = matches[1];
-      const channels = await listChannels(app, day);
+      const channels = await findDisusedChannels(app, day);
       await say(`channels unused for ${day}days: ${channels}`);
     }
 
   // archive
-  } else if (message.includes('archive')) {
+  } else if (message.match(archivePattern)) {
 
   }
 });
@@ -102,7 +100,4 @@ app.event('app_mention', async({ event, say }) => {
 (async () => {
   await app.start();
   console.log('⚡️ Bolt app started');
-
-  unusedChannels = await findDisusedChannels(app, 100);
-  console.log(unusedChannels)
 })();
