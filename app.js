@@ -69,18 +69,6 @@ const isChannelDisused = async (app, channel, threshold) => {
     return false;
   }
 
-  // update channel info to the latest one
-  const { channel: newChannelInfo } = await app.client.conversations.info({
-    token: process.env.SLACK_BOT_TOKEN,
-    channel
-  });
-  // if the channel is already archived, delete from cache
-  if (newChannelInfo.is_archived) {
-    delete cachedChannels[channel];
-    writeCache(cachedChannels);
-    return false;
-  }
-
   const { messages } = await app.client.conversations.history({
     token: process.env.SLACK_BOT_TOKEN,
     channel,
