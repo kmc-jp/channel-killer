@@ -133,7 +133,7 @@ app.event('app_mention', async ({ event, say }) => {
     const matches = message.match(archivePattern);
     const day = +matches[1];
     if (day < 30) {
-      return await say(`${day}日は 短くない？`);
+      return await say(`${day}日は短くない？`);
     }
     const channels = await findDisusedChannels(app, day);
     // TODO: archive channlels
