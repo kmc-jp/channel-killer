@@ -20,7 +20,9 @@ const readCache = () => {
     try {
       const buf = fs.readFileSync(cacheFile);
       cachedData = JSON.parse(buf);
-    } catch (_) {}
+    } catch (_) {
+      // do nothing if the file is broken
+    }
   }
   return cachedData;
 };
@@ -96,9 +98,8 @@ const isChannelDisused = async (app, channel, threshold) => {
 const findDisusedChannels = async (app, threshold) => {
   const channels = await findAllChannels(app);
   const disusedChannels = [];
-  console.log(channels.length)
-  for (channel of channels) {
-    console.log(`check ${channel.name}`)
+  for (let channel of channels) {
+    console.log(`check ${channel.name}`);
     // join if not a member
     if (!channel.is_member) {
       await joinChannel(app, channel.id);
@@ -108,7 +109,7 @@ const findDisusedChannels = async (app, threshold) => {
     }
   }
   return disusedChannels;
-}
+};
 
 const app = new App({
   logLevel: 'debug',
@@ -138,7 +139,7 @@ app.event('app_mention', async ({ event, say }) => {
     if (day < 30) {
       return await say(`${day}日は短くない？`);
     }
-    const channels = await findDisusedChannels(app, day);
+    // const channels = await findDisusedChannels(app, day);
     // TODO: archive channlels
 
   } else {
