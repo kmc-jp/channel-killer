@@ -1,9 +1,6 @@
 // Description
 //   Responses or archives unused channels.
 //
-// Configuration:
-//   None
-//
 // Commands:
 //   @APPID list ([0-9]+)days - returns unused channels
 //   @APPID kill ([0-9]+)days - archives unused channels
@@ -117,7 +114,7 @@ const app = new App({
   socketMode: true
 });
 
-app.event('app_mention', async({ event, say }) => {
+app.event('app_mention', async ({ event, say }) => {
   const message = event.text;
   const listPattern = /list ([0-9]+)days/;
   const archivePattern = /archive ([0-9]+)days/;
@@ -127,13 +124,23 @@ app.event('app_mention', async({ event, say }) => {
     if (matches) {
       const day = matches[1];
       const channels = await findDisusedChannels(app, day);
-      await say(`channels disused recent ${day}days: ${channels}`);
+      await say(`channels disused for recent ${day}days: ${channels}`);
     }
 
   // archive
   } else if (message.match(archivePattern)) {
 
   }
+});
+
+// join channel if created or unarchived
+app.event('channel_created', async ({ event }) => {
+  const channel = event.channel;
+  await joinChannel(app, channel.id);
+});
+app.event('channel_unarchive', async ({ event }) => {
+  const channelId = event.channel;
+  await joinChannel(app, channelId);
 });
 
 (async () => {
