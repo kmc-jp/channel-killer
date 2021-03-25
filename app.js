@@ -120,17 +120,26 @@ app.event('app_mention', async ({ event, say }) => {
   const archivePattern = /archive ([0-9]+)days/;
   // list 
   if (message.match(listPattern)) {
+    await say('ちょっとまってね');
     const matches = message.match(listPattern);
-    if (matches) {
-      const day = matches[1];
-      const channels = await findDisusedChannels(app, day);
-      const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
-      await say(`channels disused for recent ${day}days: ${formattedChannels}`);
-    }
+    const day = +matches[1];
+    const channels = await findDisusedChannels(app, day);
+    const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
+    await say(`channels disused for recent ${day}days: ${formattedChannels}`);
 
   // archive
   } else if (message.match(archivePattern)) {
+    await say('ちょっとまってね');
+    const matches = message.match(archivePattern);
+    const day = +matches[1];
+    if (day < 30) {
+      return await say(`${day}日は 短くない？`);
+    }
+    const channels = await findDisusedChannels(app, day);
+    // TODO: archive channlels
 
+  } else {
+    await say('???');
   }
 });
 
