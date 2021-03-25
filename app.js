@@ -74,12 +74,14 @@ const isChannelDisused = async (app, channel, threshold) => {
   const { messages } = await app.client.conversations.history({
     token: process.env.SLACK_BOT_TOKEN,
     channel,
-    limit: 2
+    limit: 10 // check last 10 messages
   });
+  let i = 0;
   let lastMessage = messages[0];
-  // if the last message is join event, take next message so that we can ignore join event by this bot
-  if (lastMessage && lastMessage.subtype === 'channel_join') {
-    lastMessage = messages[1];
+  // if the last message is join event, take next message so that we can ignore join event
+  while (lastMessage && lastMessage.subtype === 'channel_join') {
+    i++;
+    lastMessage = messages[i];
   }
   // if there is no message, ignore this channel
   if (!lastMessage) {
