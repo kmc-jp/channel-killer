@@ -124,7 +124,8 @@ app.event('app_mention', async ({ event, say }) => {
     if (matches) {
       const day = matches[1];
       const channels = await findDisusedChannels(app, day);
-      await say(`channels disused for recent ${day}days: ${channels}`);
+      const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
+      await say(`channels disused for recent ${day}days: ${formattedChannels}`);
     }
 
   // archive
