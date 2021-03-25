@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -e
-
-export PATH="node_modules/.bin:node_modules/hubot/node_modules/.bin:$PATH"
-
-set -a && source .env && set +a
-node_modules/.bin/hubot "$@"
