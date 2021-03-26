@@ -149,11 +149,12 @@ app.event('app_mention', async ({ event, say }) => {
       return await say(`${day}日は短くない？`);
     }
     const channels = await findDisusedChannels(app, day);
+    const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
+    await say(`archiving channels disused for ${day}days: ${formattedChannels}`);
+
     for (let channel of channels) {
       await archiveChannel(app, channel);
     }
-    const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
-    await say(`archived channels disused for ${day}days: ${formattedChannels}`);
 
   } else {
     await say('???');
