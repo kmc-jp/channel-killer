@@ -113,6 +113,13 @@ const findDisusedChannels = async (app, threshold) => {
   return disusedChannels;
 };
 
+const archiveChannel = async (app, channel) => {
+  await app.client.conversations.archive({
+    token: process.env.SLACK_BOT_TOKEN,
+    channel
+  });
+};
+
 const app = new App({
   logLevel: 'debug',
   token: process.env.SLACK_BOT_TOKEN,
@@ -141,8 +148,10 @@ app.event('app_mention', async ({ event, say }) => {
     if (day < 30) {
       return await say(`${day}日は短くない？`);
     }
-    // const channels = await findDisusedChannels(app, day);
-    // TODO: archive channlels
+    const channels = await findDisusedChannels(app, day);
+    for (let channel of channels) {
+      await archiveChannel(app, channel);
+    }
 
   } else {
     await say('???');
