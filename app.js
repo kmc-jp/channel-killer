@@ -152,6 +152,8 @@ app.event('app_mention', async ({ event, say }) => {
     for (let channel of channels) {
       await archiveChannel(app, channel);
     }
+    const formattedChannels = channels.map(channel => `<#${channel}>`).join(',');
+    await say(`archived channels disused for ${day}days: ${formattedChannels}`);
 
   } else {
     await say('???');
