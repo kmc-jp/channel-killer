@@ -71,11 +71,18 @@ const isChannelDisused = async (app, channel, threshold) => {
     return false;
   }
 
-  const { messages } = await app.client.conversations.history({
-    token: process.env.SLACK_BOT_TOKEN,
-    channel,
-    limit: 10 // check last 10 messages
-  });
+  let messages;
+  try {
+    const data = await app.client.conversations.history({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel,
+      limit: 10 // check last 10 messages
+    });
+    messages = data.messages;
+  } catch (_) {
+    // failed to fetch history
+    return false;
+  }
   let i = 0;
   let lastMessage = messages[0];
   // if the last message is join event, take next message so that we can ignore join event
